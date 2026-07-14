@@ -8,6 +8,7 @@ import {
   requireOwner,
 } from "./model/auth";
 import { normalizeName, SERVER_NAME_MAX_CHARS } from "./model/validators";
+import { deleteChannelCascade } from "./model/cascade";
 
 // Servers, invites, and membership (FR-005–FR-010a).
 
@@ -190,38 +191,7 @@ export const remove = mutation({
   },
 });
 
-// --- shared cascade helpers (reused by channels.remove in US4) ---
-
-async function deleteChannelCascade(ctx: MutationCtx, channelId: Id<"channels">) {
-  const messages = await ctx.db
-    .query("messages")
-    .withIndex("by_channel", (q) => q.eq("channelId", channelId))
-    .collect();
-  for (const message of messages) {
-    await ctx.db.delete(message._id);
-  }
-  const calls = await ctx.db
-    .query("calls")
-    .withIndex("by_channel", (q) => q.eq("channelId", channelId))
-    .collect();
-  for (const call of calls) {
-    await deleteCallCascade(ctx, call._id);
-  }
-}
-
-async function deleteCallCascade(ctx: MutationCtx, callId: Id<"calls">) {
-  const participants = await ctx.db
-    .query("callParticipants")
-    .withIndex("by_call", (q) => q.eq("callId", callId))
-    .collect();
-  for (const p of participants) await ctx.db.delete(p._id);
-  const signals = await ctx.db
-    .query("signals")
-    .withIndex("by_call", (q) => q.eq("callId", callId))
-    .collect();
-  for (const s of signals) await ctx.db.delete(s._id);
-  await ctx.db.delete(callId);
-}
+// --- server-specific helper ---
 
 async function dropUserFromServerCalls(
   ctx: MutationCtx,

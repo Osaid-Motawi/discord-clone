@@ -14,6 +14,7 @@ import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
 import type * as model_auth from "../model/auth.js";
+import type * as model_cascade from "../model/cascade.js";
 import type * as model_validators from "../model/validators.js";
 import type * as presence from "../presence.js";
 import type * as servers from "../servers.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   messages: typeof messages;
   "model/auth": typeof model_auth;
+  "model/cascade": typeof model_cascade;
   "model/validators": typeof model_validators;
   presence: typeof presence;
   servers: typeof servers;

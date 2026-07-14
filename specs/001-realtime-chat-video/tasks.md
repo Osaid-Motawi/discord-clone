@@ -141,9 +141,9 @@ deleting a channel removes its messages.
 **Independent Test**: Owner creates a text + a voice channel, renames each (live for all),
 deletes the text channel and its messages disappear for everyone (spec US4).
 
-- [ ] T036 [P] [US4] Implement `convex/channels.ts`: `list`✅, `get`✅ (read-only queries done in US3), `create` (text|voice, owner), `rename` (owner), `remove` (owner; cascade delete messages + any active call/participants/signals for the channel) — **mutations remain**
-- [ ] T037 [US4] Implement `ChannelSidebar` in `src/components/layout/ChannelSidebar.tsx`: channel list (all members) + owner CRUD UI for text & voice channels
-- [ ] T038 [P] [US4] `convex-test` `tests/convex/channels.test.ts`: owner-only CRUD (FR-013), delete cascades messages (FR-014)
+- [X] T036 [P] [US4] Implement `convex/channels.ts`: `list`, `get`, `create` (text|voice, owner), `rename` (owner), `remove` (owner; cascade delete messages + calls/participants/signals via `convex/model/cascade.ts`, reused by `servers.remove`)
+- [X] T037 [US4] Implement `ChannelSidebar` channel list (all members) + owner CRUD UI (`CreateChannelModal`, `RenameChannelModal`, per-channel delete)
+- [X] T038 [P] [US4] `convex-test` `tests/convex/channels.test.ts`: owner-only CRUD (FR-013), delete cascades messages (FR-014), members see all channels (FR-012)
 
 **Checkpoint**: Servers support multiple text/voice channels. Voice channels now exist for US6.
 
