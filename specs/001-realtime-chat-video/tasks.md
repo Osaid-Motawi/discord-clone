@@ -157,10 +157,11 @@ thread; DM typing.
 **Independent Test**: Two users who share a server DM in real time; edit/delete work; reopening
 a DM reuses the same thread; no shared server → not available (spec US5).
 
-- [ ] T039 [P] [US5] Implement `convex/directMessages.ts`: `openThread` (shared-server check + canonical-pair find-or-create), `listThreads`, `list` (paginated), `send`, `edit`, `remove`
-- [ ] T040 [US5] Implement `src/pages/DMPage.tsx` + DM list UI (reuses chat components from US3)
-- [ ] T041 [US5] Wire DM typing indicators (reuse `typing.*` with `scopeType:'dm'`, `requireDMParticipant`)
-- [ ] T042 [P] [US5] `convex-test` `tests/convex/dm.test.ts`: reuse existing thread / no duplicate (FR-023, US5 #5), no-shared-server rejected (US5 #4)
+- [X] T039 [P] [US5] Implement `convex/directMessages.ts`: `openThread` (shared-server check + canonical-pair find-or-create), `listThreads`, `getThread`, `list` (paginated), `send`, `edit`, `remove`
+- [X] T040 [US5] Implement `src/pages/DMPage.tsx` + DM list UI (sidebar DM list when no server + member-list "Message" action); reuses refactored chat components (`MessageListView`, `MessageItem`, `Composer`)
+- [X] T041 [US5] Wire DM typing indicators (reuse `typing.*` with `scopeType:'dm'`, `requireDMParticipant`)
+- [X] T042 [P] [US5] `convex-test` `tests/convex/dm.test.ts`: reuse existing thread / no duplicate (FR-023, US5 #5), no-shared-server rejected (US5 #4), author-only edit/delete, non-participant blocked
+- [X] T042a [US5] *(post-v1 addition, FR-023a / US5 #7)* Unread DM badges: `directMessageThreads.lastReadA/lastReadB` schema fields, `directMessages.markRead`/`listThreads` unread count/`unreadTotal` queries, `UnreadBadge` component wired into `ChannelSidebar`'s DM list and `ServerRail`'s home icon, `DMPage` marks read on open + on new arrivals; tests in `tests/convex/dm.test.ts`
 
 **Checkpoint**: Private messaging works alongside server channels.
 
@@ -175,16 +176,16 @@ leave; channel list shows connected members; single active call; disconnect hand
 (reflected <2s), channel list shows both, one leaves and drops off; joining another call moves
 them; killed tab treated as left (spec US6).
 
-- [ ] T043 [P] [US6] Implement `convex/calls.ts`: `join` (single-active-call removal + capacity ≤4 + find-or-create call), `leave`, `heartbeat`, `setMedia`, `roster`, `connectedByChannel`, `sweepStale` (internal)
-- [ ] T044 [P] [US6] Implement `convex/signals.ts`: `send`, `inbox` (rows for caller, **ordered by `_creationTime`**), `ack` (delete consumed)
-- [ ] T045 [US6] Implement `src/lib/webrtc/PeerMesh.ts`: Perfect Negotiation (`polite = myId<remoteId`, no-arg `setLocalDescription`, `ignoreOffer`/rollback), `restartIce()` on `connectionState==='failed'`, mic/cam via `track.enabled`, **tolerate absent local stream (listen-only join)**
-- [ ] T046 [US6] Implement `src/lib/webrtc/signaling.ts`: map `signals` ↔ `RTCPeerConnection`, **dedupe by `_id`**, **buffer ICE candidates until `remoteDescription` set**
-- [ ] T047 [US6] Implement `src/hooks/useCall.ts` (join/leave, subscribe `roster`+`signals.inbox`, drive `PeerMesh`, call heartbeat)
-- [ ] T048 [US6] Implement call components in `src/components/call/`: `CallStage`, `VideoTile`, `CallControls` (mic/cam toggle, speaking via `getSynchronizationSources().audioLevel`, muted indicator; tile teardown on roster change OR `connectionState==='failed'`)
-- [ ] T049 [US6] Show connected members per voice channel in `ChannelSidebar` (via `calls.connectedByChannel`, FR-029)
-- [ ] T050 [P] [US6] **Smoke test** `tests/smoke/join-call.test.ts`: `calls.join` → roster includes participant and signaling inbox is wired (Principle VI)
-- [ ] T051 [P] [US6] Unit test `tests/unit/peermesh.test.ts`: Perfect Negotiation glare → impolite sets `ignoreOffer`, polite rolls back (mock `RTCPeerConnection`)
-- [ ] T052 [P] [US6] `convex-test` `tests/convex/calls.test.ts`: capacity >4 rejected (FR-025), single-active-call switch (FR-032), stale participant swept (FR-031)
+- [X] T043 [P] [US6] Implement `convex/calls.ts`: `join` (single-active-call removal + capacity ≤4 + find-or-create call), `leave`, `heartbeat`, `setMedia`, `roster`, `connectedByChannel`, `sweepStale` (internal, wired into `convex/crons.ts`)
+- [X] T044 [P] [US6] Implement `convex/signals.ts`: `send`, `inbox` (rows for caller, **ordered by `_creationTime`** via `.order("asc")`), `ack` (delete consumed)
+- [X] T045 [US6] Implement `src/lib/webrtc/PeerMesh.ts`: Perfect Negotiation (`polite = myId<remoteId`, no-arg `setLocalDescription`, `ignoreOffer`/rollback), `restartIce()` on `connectionState==='failed'`, mic/cam via `track.enabled`, **tolerate absent local stream (listen-only join via recvonly transceivers)**
+- [X] T046 [US6] Implement `src/lib/webrtc/signaling.ts`: map `signals` ↔ `RTCPeerConnection` (`processInboxSignals`), **dedupe by `_id`**; ICE-candidate buffering lives in `PeerMesh` (owns `pc.remoteDescription`)
+- [X] T047 [US6] Implement `src/hooks/useCall.ts` (join/leave, subscribe `roster`+`signals.inbox`, drive `PeerMesh`, call heartbeat, speaking poll via `src/lib/webrtc/speaking.ts`)
+- [X] T048 [US6] Implement call components in `src/components/call/`: `CallStage`, `VideoTile`, `CallControls` (mic/cam toggle, speaking via `getSynchronizationSources().audioLevel` + local `AnalyserNode`, muted indicator; tile teardown on roster change OR `connectionState==='failed'`)
+- [X] T049 [US6] Show connected members per voice channel in `ChannelSidebar` (via `calls.connectedByChannel`, FR-029) + voice-channel join lobby in `ChannelView`
+- [X] T050 [P] [US6] **Smoke test** `tests/smoke/join-call.test.ts`: `calls.join` → roster includes participant and signaling inbox is wired (Principle VI)
+- [X] T051 [P] [US6] Unit test `tests/unit/peermesh.test.ts`: Perfect Negotiation glare → impolite sets `ignoreOffer`, polite rolls back; also covers ICE-candidate buffering and `restartIce()` on failure (mock `RTCPeerConnection`)
+- [X] T052 [P] [US6] `convex-test` `tests/convex/calls.test.ts`: capacity >4 rejected (FR-025), single-active-call switch (FR-032), stale participant swept (FR-031), non-member join rejected
 
 **Checkpoint**: Group voice/video calls work in voice channels.
 
@@ -197,9 +198,9 @@ them; killed tab treated as left (spec US6).
 **Independent Test**: In an open DM, one starts a video call, the other joins, both see video and
 can toggle mic/cam and leave (spec US7).
 
-- [ ] T053 [US7] Add start/join 1-on-1 call from `src/pages/DMPage.tsx` using `useCall` with `scopeType:'dm'` (reuses `calls.join`/`leave`/`setMedia`)
-- [ ] T054 [US7] Reuse `CallStage`/`CallControls` for the DM call surface; leaving ends the call for the participant
-- [ ] T055 [P] [US7] `convex-test` `tests/convex/dm-call.test.ts`: DM call join/leave; single-active-call holds across DM ↔ voice-channel (FR-030, FR-032)
+- [X] T053 [US7] Add start/join 1-on-1 call from `src/pages/DMPage.tsx` using `useCall` with `scopeType:'dm'` (reuses `calls.join`/`leave`/`setMedia`); added `calls.activeForThread` query so the other participant reactively sees "Join Video Call" the instant a call starts (FR-030, US7 #1)
+- [X] T054 [US7] Reuse `CallStage`/`CallControls` for the DM call surface (bounded panel above the message list); leaving ends the call for that participant only (US7 #3)
+- [X] T055 [P] [US7] `convex-test` `tests/convex/dm-call.test.ts`: DM call join/leave, reactive visibility, non-participant rejected, single-active-call holds across DM ↔ voice-channel (FR-030, FR-032)
 
 **Checkpoint**: All user stories independently functional.
 
@@ -209,12 +210,12 @@ can toggle mic/cam and leave (spec US7).
 
 **Purpose**: Consolidation, resilience, and final gates across all stories.
 
-- [ ] T056 [P] Consolidate staleness cleanup into a single `convex/crons.ts` sweep (presence, typing, call participants, orphan signals) instead of per-table jobs (Principle I)
-- [ ] T057 [P] Add loading/empty/error states across views using `EmptyState`/`Spinner`
-- [ ] T058 [P] Surface a per-peer connection-failure message for calls (documented STUN-only/strict-NAT limitation)
-- [ ] T059 [P] Accessibility pass (labels, focus, keyboard) on interactive components
-- [ ] T060 Execute quickstart.md validation scenarios end-to-end (all user stories)
-- [ ] T061 Final gates: `npm run typecheck` (strict) && `lint` && `test` && `build` all green (Principles III, V, VI)
+- [X] T056 [P] Consolidate staleness cleanup into a single `convex/maintenance.ts` (`sweepAll`) wired to one `convex/crons.ts` interval (presence, typing — previously unswept, call participants, orphan signals); removed the old per-table `presence.sweepStale`/`calls.sweepStale` (Principle I)
+- [X] T057 [P] Add loading states to `ChannelSidebar` (channel list, DM list) and `MemberList` via `Spinner`; empty/error states elsewhere were already in place from prior stories
+- [X] T058 [P] `VideoTile`: clearer per-peer connection-failure message referencing the STUN-only/no-TURN limitation; debounce `disconnected` (transient) 3s before showing it, matching research.md §7a — only `failed` surfaces immediately
+- [X] T059 [P] Accessibility pass: `Modal` Escape-to-close; server-menu `aria-haspopup`/`aria-expanded`/`role="menu"`/`role="menuitem"`; hover-only action buttons (channel rename/delete, member message/remove, **and message edit/delete — found via live browser E2E testing after the initial pass**) switched from `hidden` (unreachable by keyboard) to `opacity-0 focus:opacity-100 group-hover:opacity-100` (tabbable + visible on focus) with `aria-label`s; `Composer` textarea `aria-label`
+- [X] T060 Re-ran all per-story backend verification scripts (`scripts/verify-*.mjs`, US1–US7) end-to-end against the live deployment after the Polish changes — all pass; quickstart.md's browser-only steps (visual layout, camera/mic prompts, two-tab WebRTC) still require manual verification (see completion report)
+- [X] T061 Final gates: `npm run typecheck` (both `tsconfig.json` and `convex/tsconfig.json`) && `lint` && `test` (41/41) && `build` all green (Principles III, V, VI)
 
 ---
 

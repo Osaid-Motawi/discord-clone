@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Avatar } from "../common/Avatar";
 import { formatDateTime } from "../../lib/time";
 import { MESSAGE_MAX_CHARS } from "../../lib/constants";
 
+// Source-agnostic message shape (works for channel messages and DMs).
 export interface ChatMessage {
-  _id: Id<"messages">;
+  _id: string;
   _creationTime: number;
   authorId: Id<"users">;
   content: string;
@@ -16,16 +15,21 @@ export interface ChatMessage {
   authorImage?: string;
 }
 
-/** A single message row with author-only edit/delete (FR-017, FR-018). */
+/**
+ * A single message row (FR-017). Edit/delete are provided by the parent so the same
+ * component serves channel messages and DMs (FR-018/FR-022).
+ */
 export function MessageItem({
   message,
   isOwn,
+  onEdit,
+  onDelete,
 }: {
   message: ChatMessage;
   isOwn: boolean;
+  onEdit: (content: string) => Promise<void>;
+  onDelete: () => Promise<void>;
 }) {
-  const editMessage = useMutation(api.messages.edit);
-  const removeMessage = useMutation(api.messages.remove);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.content);
 
@@ -33,13 +37,13 @@ export function MessageItem({
     event.preventDefault();
     const content = draft.trim();
     if (!content) return;
-    await editMessage({ messageId: message._id, content });
+    await onEdit(content);
     setEditing(false);
   }
 
-  async function onDelete() {
+  async function onDeleteClick() {
     if (!window.confirm("Delete this message?")) return;
-    await removeMessage({ messageId: message._id });
+    await onDelete();
   }
 
   return (
@@ -94,11 +98,22 @@ export function MessageItem({
       </div>
 
       {isOwn && !editing && (
-        <div className="hidden gap-2 text-xs text-text-muted group-hover:flex">
-          <button className="hover:text-text-normal" onClick={() => setEditing(true)}>
+        // Kept in the tab order (not display:none) so keyboard users can reach
+        // these via focus, not just pointer hover — same fix as ChannelSidebar
+        // and MemberList's hover-reveal actions.
+        <div className="flex gap-2 text-xs text-text-muted opacity-0 focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            className="hover:text-text-normal"
+            onClick={() => setEditing(true)}
+            aria-label="Edit message"
+          >
             Edit
           </button>
-          <button className="hover:text-danger" onClick={onDelete}>
+          <button
+            className="hover:text-danger"
+            onClick={onDeleteClick}
+            aria-label="Delete message"
+          >
             Delete
           </button>
         </div>

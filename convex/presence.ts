@@ -1,12 +1,13 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUser } from "./model/auth";
-import { PRESENCE_STALE_MS } from "./model/validators";
 
 // Presence via heartbeat (research.md §4). Reads return raw `lastSeen`; the client
 // derives online/offline with a local clock (src/lib/presence.ts) so a user going
 // stale is reflected without a server write, while heartbeats push online updates
-// reactively (Constitution Principle II — no read polling).
+// reactively (Constitution Principle II — no read polling). Staleness sweeping is
+// consolidated into `convex/maintenance.ts` (Principle I — one sweep, not one per
+// table).
 
 /** Refresh the caller's presence. Called on an interval while connected. */
 export const heartbeat = mutation({
@@ -42,21 +43,5 @@ export const listForUsers = query({
       results.push({ userId, lastSeen: row?.lastSeen ?? 0 });
     }
     return results;
-  },
-});
-
-/** Delete stale presence rows to bound table size (invoked by cron). */
-export const sweepStale = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const cutoff = Date.now() - PRESENCE_STALE_MS;
-    const stale = await ctx.db
-      .query("presence")
-      .withIndex("by_lastSeen", (q) => q.lt("lastSeen", cutoff))
-      .collect();
-    for (const row of stale) {
-      await ctx.db.delete(row._id);
-    }
-    return null;
   },
 });

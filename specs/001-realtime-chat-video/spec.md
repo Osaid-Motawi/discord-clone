@@ -160,7 +160,13 @@ channel and confirm its messages are gone for everyone.
 Any user can open a 1-on-1 direct message (DM) conversation with another user who shares at
 least one server with them. DMs behave like channels: messages are delivered in real time,
 authors can edit and delete their own messages, and a typing indicator shows when the other
-participant is composing.
+participant is composing. An unread-message badge shows on each DM and as a total on the
+home icon until the conversation is opened (FR-023a — see note below).
+
+> **Post-v1 scope addition**: Unread DM badges were originally deferred (see the v1
+> Out-of-Scope list) but were added during implementation at the user's request. This is
+> tracked here as FR-023a / US5 #7 rather than a fresh clarification round, since it's a
+> small, additive change with no impact on the rest of the spec.
 
 **Why this priority**: DMs add private communication alongside server channels. They build
 on the messaging capability from US3 and are valuable but not part of the core server-chat
@@ -185,6 +191,9 @@ confirm a typing indicator appears while the other participant is composing.
    than a second, duplicate conversation being created.
 6. **Given** a participant composing a message in a DM, **When** they are typing, **Then** the
    other participant sees a typing indicator, which clears when they stop.
+7. **Given** a user receives DM messages while not viewing that conversation, **When** they
+   look at the DM list, **Then** the conversation shows an unread count, and a total appears
+   on the home icon; **When** they open the conversation, **Then** both clear.
 
 ---
 
@@ -347,6 +356,11 @@ other join, confirm both see each other's video and can toggle mic/camera and le
   channel typing indicators, FR-020).
 - **FR-023**: System MUST reuse an existing DM conversation between two users rather than
   creating a duplicate.
+- **FR-023a** *(post-v1 addition)*: System MUST show an unread-message count on each DM
+  conversation in the DM list, and a combined total on the home icon, for messages received
+  from the other participant since the conversation was last opened; opening the conversation
+  MUST clear its count (and the total updates accordingly). A user's own messages MUST NOT
+  count as unread for themselves.
 
 #### Voice & Video Calls
 
@@ -388,7 +402,8 @@ other join, confirm both see each other's video and can toggle mic/camera and le
   attributes: author, content (max 2000 characters), timestamp, edited indicator. Persists
   independently of the author's current server membership.
 - **DM Conversation**: A 1-on-1 messaging space between two Users who share a server; holds
-  messages and supports typing indicators like a channel.
+  messages and supports typing indicators like a channel. Tracks each participant's
+  last-read time to compute their unread count (FR-023a).
 - **Call**: A live voice/video session associated with a voice Channel or a DM Conversation.
   Has a set of connected participant Users, each with mic and camera state and a
   speaking/muted indicator.
@@ -453,4 +468,6 @@ other join, confirm both see each other's video and can toggle mic/camera and le
 - Screen sharing
 - Native mobile applications
 - Message search
-- Unread indicators and new-message notifications (no per-user read-state tracking)
+- Channel unread indicators / new-message notifications (per-user read-state tracking is
+  only implemented for DMs — FR-023a — not channels; adding it there would need per-channel
+  read state, deferred to keep this addition small)

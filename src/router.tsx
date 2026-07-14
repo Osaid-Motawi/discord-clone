@@ -4,6 +4,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { HomePage } from "./pages/HomePage";
 import { ServerPage } from "./pages/ServerPage";
 import { ChannelView } from "./pages/ChannelView";
+import { DMPage } from "./pages/DMPage";
 import { InviteAcceptPage } from "./pages/InviteAcceptPage";
 import { AppShell } from "./components/layout/AppShell";
 import { Spinner } from "./components/common/Spinner";
@@ -33,6 +34,7 @@ export function AppRouter() {
               path="/servers/:serverId/channels/:channelId"
               element={<ChannelView />}
             />
+            <Route path="/dms/:threadId" element={<DMPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

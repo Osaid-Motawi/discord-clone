@@ -1,20 +1,34 @@
 import { useEffect, useRef } from "react";
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { useInfiniteMessages } from "../../hooks/useInfiniteMessages";
-import { MessageItem } from "./MessageItem";
+import { MessageItem, type ChatMessage } from "./MessageItem";
 import { EmptyState } from "../common/EmptyState";
 import { MESSAGE_PAGE_SIZE } from "../../lib/constants";
 
-/** Scrollable message history with newest-first infinite scroll (FR-016, FR-019). */
-export function MessageList({ channelId }: { channelId: Id<"channels"> }) {
-  const { messages, status, loadMore } = useInfiniteMessages(channelId);
-  const me = useQuery(api.users.me, {});
+type Status = "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
+
+/**
+ * Presentational, scrollable message history with newest-first infinite scroll
+ * (FR-016, FR-019). Data + edit/delete come from the parent, so it serves both
+ * channel messages and DMs.
+ */
+export function MessageListView({
+  messages,
+  status,
+  loadMore,
+  meId,
+  onEdit,
+  onDelete,
+}: {
+  messages: ChatMessage[];
+  status: Status;
+  loadMore: (n: number) => void;
+  meId: Id<"users"> | undefined;
+  onEdit: (messageId: string, content: string) => Promise<void>;
+  onDelete: (messageId: string) => Promise<void>;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastIdRef = useRef<string | null>(null);
 
-  // Auto-scroll to the bottom when a new latest message arrives.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -34,11 +48,7 @@ export function MessageList({ channelId }: { channelId: Id<"channels"> }) {
   }
 
   return (
-    <div
-      ref={scrollRef}
-      onScroll={onScroll}
-      className="flex-1 overflow-y-auto py-3"
-    >
+    <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto py-3">
       {status === "LoadingMore" && (
         <p className="py-2 text-center text-xs text-text-muted">Loading older…</p>
       )}
@@ -51,7 +61,9 @@ export function MessageList({ channelId }: { channelId: Id<"channels"> }) {
         <MessageItem
           key={message._id}
           message={message}
-          isOwn={message.authorId === me?._id}
+          isOwn={message.authorId === meId}
+          onEdit={(content) => onEdit(message._id, content)}
+          onDelete={() => onDelete(message._id)}
         />
       ))}
     </div>

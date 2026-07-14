@@ -30,7 +30,10 @@ export function AuthPage() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-rail p-4">
-      <div className="w-full max-w-sm rounded-lg bg-chat p-8 shadow-xl">
+      <div className="w-full max-w-sm animate-fade-in rounded-2xl border border-white/5 bg-chat p-8 shadow-soft">
+        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-gradient text-xl font-bold text-white shadow-glow">
+          D
+        </div>
         <h1 className="mb-1 text-2xl font-bold text-text-normal">
           {flow === "signIn" ? "Welcome back" : "Create your account"}
         </h1>
@@ -94,7 +97,7 @@ export function AuthPage() {
 
         <button
           type="button"
-          className="mt-4 w-full text-center text-sm text-text-muted hover:text-text-normal"
+          className="mt-4 w-full text-center text-sm text-text-muted transition-colors hover:text-accent"
           onClick={() => {
             setFlow(flow === "signIn" ? "signUp" : "signIn");
             setError(null);
@@ -121,7 +124,7 @@ function Field({
       </span>
       <input
         name={name}
-        className="rounded bg-rail px-3 py-2 text-text-normal outline-none ring-accent focus:ring-2"
+        className="rounded-lg border border-white/5 bg-rail px-3 py-2 text-text-normal outline-none transition-shadow focus:ring-2 focus:ring-accent"
         {...props}
       />
     </label>

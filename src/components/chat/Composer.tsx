@@ -1,25 +1,31 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
 import { MESSAGE_MAX_CHARS, TYPING_THROTTLE_MS } from "../../lib/constants";
 
-/** Message composer with typing pings and the 2000-char limit (FR-016/016a/020). */
+/**
+ * Message composer with typing pings and the 2000-char limit (FR-016/016a/020).
+ * `onSend` and the typing scope are supplied by the parent, so it serves both
+ * channels (scopeType 'channel') and DMs (scopeType 'dm').
+ */
 export function Composer({
-  channelId,
+  onSend,
+  scopeType,
+  scopeId,
   placeholder,
 }: {
-  channelId: Id<"channels">;
+  onSend: (content: string) => Promise<void>;
+  scopeType: "channel" | "dm";
+  scopeId: string;
   placeholder: string;
 }) {
-  const send = useMutation(api.messages.send);
   const ping = useMutation(api.typing.ping);
   const stop = useMutation(api.typing.stop);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const lastPingRef = useRef(0);
 
-  const scope = { scopeType: "channel" as const, scopeId: channelId as string };
+  const scope = { scopeType, scopeId };
 
   function onChange(value: string) {
     setText(value);
@@ -42,7 +48,7 @@ export function Composer({
     lastPingRef.current = 0;
     void stop(scope);
     try {
-      await send({ channelId, content });
+      await onSend(content);
     } catch {
       setError("Message failed to send (max 2000 characters).");
       setText(content);
@@ -70,6 +76,7 @@ export function Composer({
           rows={1}
           maxLength={MESSAGE_MAX_CHARS}
           placeholder={placeholder}
+          aria-label={placeholder}
           className="max-h-40 flex-1 resize-none bg-transparent text-sm text-text-normal outline-none placeholder:text-text-muted"
         />
         {remaining < 200 && (

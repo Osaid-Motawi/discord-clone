@@ -1,8 +1,9 @@
 import { useQuery, useMutation } from "convex/react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Avatar } from "../common/Avatar";
+import { Spinner } from "../common/Spinner";
 import { useNow } from "../../hooks/useNow";
 import { isOnline } from "../../lib/presence";
 
@@ -27,6 +28,8 @@ export function MemberList() {
   );
   const now = useNow();
   const removeMember = useMutation(api.servers.removeMember);
+  const openThread = useMutation(api.directMessages.openThread);
+  const navigate = useNavigate();
 
   if (!typedServerId) {
     return <aside className="hidden w-60 bg-sidebar lg:block" aria-label="Members" />;
@@ -53,17 +56,28 @@ export function MemberList() {
     await removeMember({ serverId: typedServerId, userId });
   }
 
+  async function onMessage(userId: Id<"users">) {
+    const { threadId } = await openThread({ otherUserId: userId });
+    navigate(`/dms/${threadId}`);
+  }
+
   return (
     <aside
       className="hidden w-60 flex-col bg-sidebar lg:flex"
       aria-label="Members"
     >
       <div className="flex h-12 items-center px-4 text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Members — {members?.length ?? 0}
+        {members === undefined ? "Members" : `Members — ${members.length}`}
       </div>
       <div className="flex-1 overflow-y-auto p-2">
+        {members === undefined && (
+          <div className="px-2 py-2">
+            <Spinner label="Loading members…" />
+          </div>
+        )}
         {sorted.map((member) => {
           const online = isOnline(lastSeenById.get(member.userId) ?? 0, now);
+          const isSelf = member.userId === me?._id;
           const canRemove = iAmOwner && member.role !== "owner";
           return (
             <div
@@ -82,10 +96,20 @@ export function MemberList() {
                   <span className="ml-1 text-xs text-accent">(owner)</span>
                 )}
               </span>
+              {!isSelf && (
+                <button
+                  className="text-xs text-accent opacity-0 hover:underline focus:opacity-100 group-hover:opacity-100"
+                  onClick={() => onMessage(member.userId)}
+                  aria-label={`Message ${member.name ?? "this member"}`}
+                >
+                  Message
+                </button>
+              )}
               {canRemove && (
                 <button
-                  className="hidden text-xs text-danger hover:underline group-hover:block"
+                  className="text-xs text-danger opacity-0 hover:underline focus:opacity-100 group-hover:opacity-100"
                   onClick={() => onRemove(member.userId, member.name)}
+                  aria-label={`Remove ${member.name ?? "this member"}`}
                 >
                   Remove
                 </button>

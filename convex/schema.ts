@@ -62,6 +62,11 @@ export default defineSchema({
   directMessageThreads: defineTable({
     userA: v.id("users"), // canonically the smaller id
     userB: v.id("users"),
+    // Last-read timestamps per side, for unread badges (post-v1 addition —
+    // see spec.md FR-023a). A thread has exactly 2 participants, so two
+    // optional fields are simpler than a separate read-state table.
+    lastReadA: v.optional(v.number()),
+    lastReadB: v.optional(v.number()),
   })
     .index("by_pair", ["userA", "userB"])
     .index("by_userA", ["userA"])
@@ -102,7 +107,8 @@ export default defineSchema({
   })
     .index("by_call", ["callId"])
     .index("by_user", ["userId"])
-    .index("by_call_user", ["callId", "userId"]),
+    .index("by_call_user", ["callId", "userId"])
+    .index("by_lastSeen", ["lastSeen"]),
 
   signals: defineTable({
     callId: v.id("calls"),
